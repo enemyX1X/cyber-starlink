@@ -1,2 +1,68 @@
-"use client";\nimport { useEffect, useState } from "react";\n\nexport default function Jarvis(){\n  const [listening, setListening] = useState(false);\n  const [voices, setVoices] = useState([]);\n  const [selectedVoice, setSelectedVoice] = useState(null);\n  const [lastSpoken, setLastSpoken] = useState('');\n\n  useEffect(()=>{\n    if (typeof window === 'undefined') return;\n    const synth = window.speechSynthesis;\n    function loadVoices(){\n      const v = synth.getVoices();\n      setVoices(v);\n      const prefer = v.find(x=>/male|deep|Daniel|Matthew|Alex|en-US/i.test(x.name + ' ' + (x.gender||'')));
-      const fallback = v.find(x=>/en-US/.test(x.lang)) || v[0];\n      setSelectedVoice(prefer || fallback);\n    }\n    loadVoices();\n    if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = loadVoices;\n  },[]);\n\n  const speak = (text) => {\n    if (typeof window === 'undefined') return;\n    const synth = window.speechSynthesis;\n    if (!synth) return alert('TTS not supported in this browser.');\n    const u = new SpeechSynthesisUtterance(text);\n    if (selectedVoice) u.voice = selectedVoice;\n    u.rate = 1.0;\n    u.pitch = 0.85;\n    synth.speak(u);\n    setLastSpoken(text);\n  };\n\n  useEffect(()=>{\n    if (typeof window === 'undefined') return;\n    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;\n    if (!SR) return;\n    const r = new SR();\n    r.continuous = false;\n    r.interimResults = false;\n    r.lang = 'en-US';\n    r.onresult = (e)=> {\n      const t = e.results[0][0].transcript;\n      speak('Command received. Processing. This is a demo response from Cyber Starlink.');\n    };\n    window.__cs_recog = r;\n  },[]);\n\n  const startListen = () => {\n    const r = window.__cs_recog;\n    if (!r) return alert('SpeechRecognition not supported.');\n    setListening(true);\n    r.start();\n    r.onend = ()=> setListening(false);\n  };\n\n  return (\n    <div style={{position:'fixed', left:18, bottom:18}}>\n      <div style={{display:'flex', gap:8, alignItems:'center'}}>\n        <button className="btn" onClick={()=>speak('Cyber Starlink ready. Awaiting commands.')}>🔊 Jarvis Speak</button>\n        <button className="btn" onClick={startListen}>{listening ? 'Listening...' : '🎙️ Listen'}</button>\n      </div>\n      <div style={{marginTop:8, fontSize:12, color:'#cbd5e1'}}>Last: {lastSpoken}</div>\n    </div>\n  );\n}\n
+"use client";
+import { useEffect, useState } from "react";
+
+export default function Jarvis() {
+  const [listening, setListening] = useState(false);
+  const [voices, setVoices] = useState([]);
+  const [selectedVoice, setSelectedVoice] = useState(null);
+  const [lastSpoken, setLastSpoken] = useState('');
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const synth = window.speechSynthesis;
+    function loadVoices() {
+      const v = synth.getVoices();
+      setVoices(v);
+      const prefer = v.find(x => /male|deep|Daniel|Matthew|Alex|en-US/i.test(x.name + ' ' + (x.gender || '')));
+      const fallback = v.find(x => /en-US/.test(x.lang)) || v[0];
+      setSelectedVoice(prefer || fallback);
+    }
+    loadVoices();
+    if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = loadVoices;
+  }, []);
+
+  const speak = (text) => {
+    if (typeof window === 'undefined') return;
+    const synth = window.speechSynthesis;
+    if (!synth) return alert('TTS not supported in this browser.');
+    const u = new SpeechSynthesisUtterance(text);
+    if (selectedVoice) u.voice = selectedVoice;
+    u.rate = 1.0;
+    u.pitch = 0.85;
+    synth.speak(u);
+    setLastSpoken(text);
+  };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return;
+    const r = new SR();
+    r.continuous = false;
+    r.interimResults = false;
+    r.lang = 'en-US';
+    r.onresult = (e) => {
+      const t = e.results[0][0].transcript;
+      speak('Command received. Processing. This is a demo response from Cyber Starlink.');
+    };
+    window.__cs_recog = r;
+  }, []);
+
+  const startListen = () => {
+    const r = window.__cs_recog;
+    if (!r) return alert('SpeechRecognition not supported.');
+    setListening(true);
+    r.start();
+    r.onend = () => setListening(false);
+  };
+
+  return (
+    <div style={{ position: 'fixed', left: 18, bottom: 18 }}>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <button className="btn" onClick={() => speak('Cyber Starlink ready. Awaiting commands.')}>🔊 Jarvis Speak</button>
+        <button className="btn" onClick={startListen}>{listening ? 'Listening...' : '🎙️ Listen'}</button>
+      </div>
+      <div style={{ marginTop: 8, fontSize: 12, color: '#cbd5e1' }}>Last: {lastSpoken}</div>
+    </div>
+  );
+}
