@@ -1,0 +1,1 @@
+import './globals.css'\n\nexport const metadata = {\n  title: 'cyber starlink',\n  description: 'Next-Gen Intelligence'\n}\n\nexport default function RootLayout({ children }) {\n  return (\n    <html lang="en">\n      <body>{children}</body>\n    </html>\n  )\n}\n

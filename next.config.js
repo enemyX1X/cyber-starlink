@@ -1,0 +1,1 @@
+/** @type {import('next').NextConfig} */\nconst nextConfig = { experimental: { appDir: true }, images: { remotePatterns: [ { protocol: "https", hostname: "image.pollinations.ai" }, { protocol: "https", hostname: "images.unsplash.com" } ] } }\nmodule.exports = nextConfig\n
