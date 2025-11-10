@@ -1,57 +1,62 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 
-// 💾 Local Storage Hybrid System
-const STORAGE_KEY = "cyber_discussions_v1";
-
-export default function DiscussionsPage() {
+export default function Discussions() {
   const [posts, setPosts] = useState([]);
+  const [username, setUsername] = useState("");
   const [newPost, setNewPost] = useState("");
-  const [blur, setBlur] = useState(20); // background dim control (0–100%)
+  const [darkness, setDarkness] = useState(20);
 
-  // Load from localStorage
+  // Load existing posts from memory.json (if available)
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) setPosts(JSON.parse(saved));
+    try {
+      const saved = localStorage.getItem("cyber_discussions");
+      if (saved) setPosts(JSON.parse(saved));
+    } catch (err) {
+      console.error("Failed to load memory", err);
+    }
   }, []);
 
-  // Save to localStorage
+  // Save posts automatically
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+    localStorage.setItem("cyber_discussions", JSON.stringify(posts));
   }, [posts]);
 
   const addPost = () => {
-    if (!newPost.trim()) return;
-    setPosts([
-      ...posts,
-      {
-        id: Date.now(),
-        text: newPost,
-        comments: [],
-        reactions: 0,
-      },
-    ]);
+    if (!newPost.trim() || !username.trim()) return;
+    const newEntry = {
+      id: Date.now(),
+      user: username,
+      text: newPost,
+      comments: [],
+      likes: 0,
+      hearts: 0,
+    };
+    setPosts([newEntry, ...posts]);
     setNewPost("");
   };
 
-  const addComment = (postId, text) => {
-    if (!text.trim()) return;
+  const addComment = (id, commentUser, commentText) => {
+    if (!commentText.trim()) return;
     setPosts(
       posts.map((p) =>
-        p.id === postId
+        p.id === id
           ? {
               ...p,
-              comments: [...p.comments, { id: Date.now(), text }],
+              comments: [
+                ...p.comments,
+                { id: Date.now(), user: commentUser, text: commentText },
+              ],
             }
           : p
       )
     );
   };
 
-  const addReaction = (postId) => {
+  const react = (id, type) => {
     setPosts(
       posts.map((p) =>
-        p.id === postId ? { ...p, reactions: p.reactions + 1 } : p
+        p.id === id ? { ...p, [type]: (p[type] || 0) + 1 } : p
       )
     );
   };
@@ -71,133 +76,137 @@ export default function DiscussionsPage() {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = (evt) => {
       try {
-        setPosts(JSON.parse(event.target.result));
+        const imported = JSON.parse(evt.target.result);
+        setPosts(imported);
       } catch {
-        alert("Invalid JSON file");
+        alert("Invalid file format");
       }
     };
     reader.readAsText(file);
   };
 
   return (
-    <main
-      className="min-h-screen text-white relative"
+    <div
+      className="min-h-screen text-white relative p-8"
       style={{
-        background: "rgba(0,0,0,0.4)",
-        backdropFilter: `blur(${blur / 4}px) brightness(${100 - blur * 0.3}%)`,
-        transition: "all 0.4s ease",
+        background: `rgba(0,0,0,${darkness / 100})`,
+        backdropFilter: `blur(${darkness / 5}px)`,
       }}
     >
-      <div className="max-w-4xl mx-auto p-6">
-        <h1 className="text-3xl font-bold mb-4 text-center">
-          🚀 AI Discussion Hub
-        </h1>
+      <h1 className="text-3xl font-bold mb-6">🚀 AI Discussion Hub</h1>
 
-        {/* Controls */}
-        <div className="flex justify-between mb-6 items-center flex-wrap gap-2">
-          <input
-            type="text"
-            placeholder="Share your thoughts..."
-            value={newPost}
-            onChange={(e) => setNewPost(e.target.value)}
-            className="flex-grow bg-gray-800 px-4 py-2 rounded-lg border border-gray-600 focus:outline-none"
-          />
-          <button
-            onClick={addPost}
-            className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg"
-          >
-            Post
-          </button>
-          <div className="flex gap-2">
-            <label className="bg-gray-700 px-3 py-2 rounded-lg cursor-pointer">
-              Import
-              <input
-                type="file"
-                accept="application/json"
-                className="hidden"
-                onChange={importData}
-              />
-            </label>
-            <button
-              onClick={exportData}
-              className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg"
-            >
-              Export
-            </button>
-          </div>
-        </div>
+      {/* Username */}
+      <input
+        className="w-64 p-2 rounded bg-black/40 border border-red-600 mb-3"
+        placeholder="Enter your name"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+      />
 
-        {/* Background blur control */}
-        <div className="mb-6">
-          <label className="text-sm opacity-70">
-            Background Blur/Darkness ({blur}%)
-          </label>
+      {/* New Post */}
+      <textarea
+        value={newPost}
+        onChange={(e) => setNewPost(e.target.value)}
+        placeholder="Share your thoughts..."
+        className="w-full p-3 rounded bg-black/30 border border-red-700"
+        rows={3}
+      />
+
+      <div className="flex gap-3 mt-3">
+        <button
+          onClick={addPost}
+          className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded"
+        >
+          Post
+        </button>
+        <button
+          onClick={exportData}
+          className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded"
+        >
+          Export
+        </button>
+        <label className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded cursor-pointer">
+          Import
+          <input type="file" accept=".json" hidden onChange={importData} />
+        </label>
+
+        <div className="flex items-center gap-2 ml-auto">
+          <span className="text-sm">Background Blur/Darkness</span>
           <input
             type="range"
             min="0"
             max="100"
-            value={blur}
-            onChange={(e) => setBlur(parseInt(e.target.value))}
-            className="w-full"
+            value={darkness}
+            onChange={(e) => setDarkness(Number(e.target.value))}
           />
-        </div>
-
-        {/* Posts */}
-        <div className="space-y-4">
-          {posts.map((post) => (
-            <div
-              key={post.id}
-              className="bg-gray-900 bg-opacity-80 rounded-xl p-4 shadow-md"
-            >
-              <p className="text-lg">{post.text}</p>
-              <div className="flex items-center gap-4 mt-2 text-sm opacity-80">
-                <button
-                  onClick={() => addReaction(post.id)}
-                  className="hover:text-yellow-400 transition"
-                >
-                  👍 {post.reactions}
-                </button>
-              </div>
-
-              <div className="mt-4 space-y-2">
-                {post.comments.map((c) => (
-                  <div
-                    key={c.id}
-                    className="ml-4 border-l border-gray-700 pl-4 text-sm opacity-90"
-                  >
-                    💬 {c.text}
-                  </div>
-                ))}
-                <CommentBox onAdd={(t) => addComment(post.id, t)} />
-              </div>
-            </div>
-          ))}
+          <span>{darkness}%</span>
         </div>
       </div>
-    </main>
+
+      <div className="mt-8 space-y-6">
+        {posts.length === 0 && (
+          <div className="text-gray-400 text-sm">
+            No discussions yet. Start one above!
+          </div>
+        )}
+
+        {posts.map((p) => (
+          <div
+            key={p.id}
+            className="bg-black/50 border border-red-900 rounded-xl p-4"
+          >
+            <div className="text-sm text-red-400 mb-1">@{p.user}</div>
+            <div className="text-base mb-3">{p.text}</div>
+
+            <div className="flex gap-4 text-sm mb-3">
+              <button onClick={() => react(p.id, "likes")}>👍 {p.likes}</button>
+              <button onClick={() => react(p.id, "hearts")}>
+                ❤️ {p.hearts}
+              </button>
+            </div>
+
+            {/* Comments */}
+            <div className="ml-4">
+              {p.comments.map((c) => (
+                <div key={c.id} className="mb-2">
+                  <span className="text-cyan-400">@{c.user}: </span>
+                  <span>{c.text}</span>
+                </div>
+              ))}
+
+              <CommentBox
+                onSubmit={(text) => addComment(p.id, username, text)}
+                disabled={!username}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
-// Component for adding comments
-function CommentBox({ onAdd }) {
+function CommentBox({ onSubmit, disabled }) {
   const [text, setText] = useState("");
   return (
-    <div className="flex mt-2 gap-2">
+    <div className="flex gap-2 mt-2">
       <input
-        type="text"
-        placeholder="Write a comment..."
+        className="flex-1 p-2 rounded bg-black/40 border border-gray-700 text-sm"
+        placeholder={disabled ? "Login name to comment" : "Add a comment..."}
+        disabled={disabled}
         value={text}
         onChange={(e) => setText(e.target.value)}
-        className="flex-grow bg-gray-800 px-3 py-1 rounded-lg border border-gray-700 text-sm"
       />
       <button
         onClick={() => {
-          onAdd(text);
-          setText("");
+          if (text.trim()) {
+            onSubmit(text);
+            setText("");
+          }
         }}
-        className="bg-blue-700 hover:bg-blue-800 px-3 py-1 rounded-lg text-sm"
+        className="bg-gray-700 hover:bg-gray-600 px-3 rounded text-sm"
       >
         Reply
       </button>
