@@ -1,3 +1,11 @@
 // app/lib/memory.js
-export const readMemory = () => ({});
-export const writeMemory = (data) => console.log("Memory write:", data);
+
+let memoryData = {};
+
+export function readMemory(key) {
+  return memoryData[key] ?? null;
+}
+
+export function writeMemory(key, value) {
+  memoryData[key] = value;
+}
