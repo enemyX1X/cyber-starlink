@@ -1,7 +1,8 @@
+// Dummy memory.js to satisfy imports
 export function readMemory() {
-  return {}; // dummy memory
+  return {};
 }
 
-export function writeMemory(data) {
-  console.log("Memory write:", data);
+export function writeMemory() {
+  return;
 }
