@@ -1,39 +1,24 @@
-// fix-memory-imports.js
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+// fix-memory-imports.cjs
+const fs = require("fs");
+const path = require("path");
 
-// __dirname workaround in ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const ROOT = path.join(__dirname, "app");
+const MEMORY_IMPORT = 'import { readMemory, writeMemory } from "@/lib/memory.js";';
 
-// Root folder to scan
-const apiDir = path.join(__dirname, "app/api");
-
-// Recursive function to process all .js files
-function updateImports(dir) {
+function fixImports(dir) {
   const files = fs.readdirSync(dir);
   for (const file of files) {
     const fullPath = path.join(dir, file);
     const stat = fs.statSync(fullPath);
-
     if (stat.isDirectory()) {
-      updateImports(fullPath);
-    } else if (fullPath.endsWith(".js")) {
+      fixImports(fullPath);
+    } else if (file.endsWith(".js") || file.endsWith(".jsx")) {
       let content = fs.readFileSync(fullPath, "utf-8");
-      const regex = /import\s+\{\s*readMemory,\s*writeMemory\s*\}\s+from\s+["'].*memory\.js["'];/g;
-
-      if (regex.test(content)) {
-        content = content.replace(
-          regex,
-          `import { readMemory, writeMemory } from "@/lib/memory.js";`
-        );
-        fs.writeFileSync(fullPath, content, "utf-8");
-        console.log(`Updated import in: ${fullPath}`);
-      }
+      content = content.replace(/import\s+{[^}]+}\s+from\s+['"].*memory\.js['"];?/g, MEMORY_IMPORT);
+      fs.writeFileSync(fullPath, content, "utf-8");
     }
   }
 }
 
-updateImports(apiDir);
-console.log("✅ All memory.js imports updated.");
+fixImports(ROOT);
+console.log("✅ All memory imports fixed!");
