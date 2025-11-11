@@ -1,16 +1,5 @@
 {
   "settings": {
-    "blur": 0,
-    "opacity": 60
-  },
-  "posts": [
-    {
-      "id": "post_1762713157598",
-      "createdAt": "2025-11-09T18:32:37.598Z",
-      "title": "orbit",
-      "content": "coming soon",
-      "tags": []
-    }
-  ],
-  "chat": []
-}
+    "blur": 98
+  }
+}}
