@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import prisma from "@/lib/prisma.js";
 
 export async function GET() {
   const posts = await prisma.post.findMany({

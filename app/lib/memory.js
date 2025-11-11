@@ -1,11 +1,8 @@
 // app/lib/memory.js
-
-let memoryData = {};
-
-export function readMemory(key) {
-  return memoryData[key] || null;
+export function readMemory() {
+  return {};
 }
 
-export function writeMemory(key, value) {
-  memoryData[key] = value;
+export function writeMemory(data) {
+  console.log("Memory written:", data);
 }
