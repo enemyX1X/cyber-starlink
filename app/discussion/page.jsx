@@ -1,12 +1,28 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Jarvis from "../components/Jarvis";
+import StatusHUD from "../components/StatusHUD";
+import ChatCard from "../components/ChatCard";
+import ImageCard from "../components/ImageCard";
+import VoiceCard from "../components/VoiceCard";
+import Image from "next/image";
 
 export default function DiscussionPage() {
   const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
+  const [brightness, setBrightness] = useState(70);
+  const [muted, setMuted] = useState({
+    v1: true,
+    yt1: true,
+    yt2: true,
+    v4: true,
+  });
 
-  // Fetch posts from API
+  useEffect(() => {
+    setLoaded(true);
+  }, []);
+
   useEffect(() => {
     const fetchPosts = async () => {
       try {
@@ -20,53 +36,186 @@ export default function DiscussionPage() {
           setPosts([]);
         }
       } catch (err) {
-        console.error("Failed to load posts", err);
+        console.error(err);
         setPosts([]);
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchPosts();
   }, []);
 
-  return (
-    <main className="min-h-screen bg-black text-white p-6">
-      <h1 className="text-3xl font-bold mb-6 text-cyan-400">Discussion Forum</h1>
+  const toggleMute = (id) => {
+    setMuted((prev) => {
+      const newState = !prev[id];
+      // handle YouTube toggling dynamically
+      if (id === "yt1" || id === "yt2") {
+        const iframe = document.getElementById(id);
+        if (iframe) {
+          const src = new URL(iframe.src);
+          src.searchParams.set("mute", newState ? "1" : "0");
+          iframe.src = src.toString();
+        }
+      }
+      return { ...prev, [id]: newState };
+    });
+  };
 
-      {loading ? (
-        <p className="text-gray-400">Loading posts...</p>
-      ) : posts.length === 0 ? (
-        <p className="text-gray-400">No posts yet. Be the first to post!</p>
-      ) : (
-        <div className="space-y-6">
-          {posts.map((post) => (
-            <div
-              key={post.id}
-              className="border border-gray-700 p-4 rounded-lg hover:border-cyan-500 transition-colors"
-            >
-              <h2 className="font-bold text-lg text-cyan-300">{post.title}</h2>
-              <p className="mt-2">{post.content}</p>
-              <div className="mt-3 flex gap-4 text-sm text-gray-400">
-                <span>Comments: {post.comments?.length ?? 0}</span>
-                <span>Likes: {post.likes?.length ?? 0}</span>
-              </div>
-              {post.comments && post.comments.length > 0 && (
-                <div className="mt-3 space-y-2">
-                  {post.comments.map((c) => (
-                    <div
-                      key={c.id}
-                      className="bg-gray-900 p-2 rounded text-sm border-l-2 border-cyan-500"
-                    >
-                      {c.content}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
+  return (
+    <main className="relative min-h-screen overflow-hidden bg-black text-white">
+      {/* ---- 2x2 Video Grid Background ---- */}
+      <div
+        className="absolute inset-0 grid grid-cols-2 grid-rows-2 z-0 transition-all duration-700"
+        style={{ filter: `brightness(${brightness}%)` }}
+      >
+        <div className="relative w-full h-full">
+          <video
+            className="w-full h-full object-cover"
+            src="/media/local1.mp4"
+            autoPlay
+            loop
+            playsInline
+            muted={muted.v1}
+          />
+          <button
+            onClick={() => toggleMute("v1")}
+            className="absolute bottom-3 right-3 bg-black/60 px-3 py-1 text-xs rounded cursor-pointer"
+          >
+            {muted.v1 ? "🔇" : "🔊"}
+          </button>
         </div>
-      )}
+
+        <div className="relative w-full h-full">
+          <iframe
+            id="yt1"
+            className="absolute inset-0 w-full h-full"
+            src="https://www.youtube.com/embed/TNQsmPf24go?autoplay=1&mute=1&loop=1&playlist=TNQsmPf24go&controls=0&modestbranding=1&rel=0"
+            title="YouTube Video 1"
+            frameBorder="0"
+            allow="autoplay; fullscreen"
+            allowFullScreen
+          />
+          <button
+            onClick={() => toggleMute("yt1")}
+            className="absolute bottom-3 right-3 bg-black/60 px-3 py-1 text-xs rounded cursor-pointer"
+          >
+            {muted.yt1 ? "🔇" : "🔊"}
+          </button>
+        </div>
+
+        <div className="relative w-full h-full">
+          <iframe
+            id="yt2"
+            className="absolute inset-0 w-full h-full"
+            src="https://www.youtube.com/embed/Ei-TcECJVXU?autoplay=1&mute=1&loop=1&playlist=Ei-TcECJVXU&controls=0&modestbranding=1&rel=0"
+            title="YouTube Video 2"
+            frameBorder="0"
+            allow="autoplay; fullscreen"
+            allowFullScreen
+          />
+          <button
+            onClick={() => toggleMute("yt2")}
+            className="absolute bottom-3 right-3 bg-black/60 px-3 py-1 text-xs rounded cursor-pointer"
+          >
+            {muted.yt2 ? "🔇" : "🔊"}
+          </button>
+        </div>
+
+        <div className="relative w-full h-full">
+          <video
+            className="w-full h-full object-cover"
+            src="/media/local4.mp4"
+            autoPlay
+            loop
+            playsInline
+            muted={muted.v4}
+          />
+          <button
+            onClick={() => toggleMute("v4")}
+            className="absolute bottom-3 right-3 bg-black/60 px-3 py-1 text-xs rounded cursor-pointer"
+          >
+            {muted.v4 ? "🔇" : "🔊"}
+          </button>
+        </div>
+      </div>
+
+      {/* ---- Overlayed UI ---- */}
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6">
+        <div
+          className={`transition-all duration-700 ${
+            loaded ? "opacity-100" : "opacity-0"
+          }`}
+        >
+          {/* Top Bar */}
+          <div className="flex items-center justify-between w-full max-w-5xl mx-auto mb-6 px-4">
+            <div className="flex items-center space-x-3">
+              <Image
+                src="/logo.png"
+                alt="Cyber Starlink Logo"
+                width={45}
+                height={45}
+                className="drop-shadow-[0_0_10px_#0ff]"
+              />
+              <h1 className="text-xl font-bold text-cyan-400 drop-shadow-[0_0_8px_#00ffff] whitespace-nowrap">
+                CYBER STARLINK DISCUSSION
+              </h1>
+            </div>
+            <StatusHUD />
+          </div>
+
+          {/* Core HUD */}
+          <div className="grid gap-6 sm:grid-cols-3 max-w-5xl mx-auto">
+            <ChatCard />
+            <ImageCard />
+            <VoiceCard />
+          </div>
+
+          {/* ---- Posts Feed ---- */}
+          <div className="mt-8 max-w-4xl mx-auto space-y-4">
+            {posts.length > 0 ? (
+              posts.map((post) => (
+                <div
+                  key={post.id}
+                  className="border border-gray-700 p-4 rounded space-y-2"
+                >
+                  <h2 className="font-bold text-lg">{post.title}</h2>
+                  <p>{post.content}</p>
+                  {post.comments && post.comments.length > 0 && (
+                    <div className="mt-2 pl-2 border-l border-gray-600 space-y-1">
+                      {post.comments.map((c) => (
+                        <p key={c.id} className="text-sm text-gray-300">
+                          {c.content}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))
+            ) : (
+              <p className="text-center opacity-50">No posts yet</p>
+            )}
+          </div>
+
+          {/* Brightness Control */}
+          <div className="mt-8 text-center">
+            <label className="text-xs opacity-70">Background Brightness</label>
+            <input
+              type="range"
+              min="20"
+              max="100"
+              value={brightness}
+              onChange={(e) => setBrightness(e.target.value)}
+              className="w-48 mt-2 accent-cyan-500"
+            />
+          </div>
+
+          {/* Footer */}
+          <div className="mt-8 text-center text-sm opacity-50">
+            quantum internet • Next-Gen space orbit intelligence network • 2025
+          </div>
+        </div>
+      </div>
+
+      <Jarvis />
     </main>
   );
 }
