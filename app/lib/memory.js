@@ -1,8 +1,11 @@
-// Dummy memory.js to satisfy imports
-export function readMemory() {
-  return {};
+// app/lib/memory.js
+
+let memoryData = {};
+
+export function readMemory(key) {
+  return memoryData[key] || null;
 }
 
-export function writeMemory() {
-  return;
+export function writeMemory(key, value) {
+  memoryData[key] = value;
 }
