@@ -1,5 +1,7 @@
 export async function POST(req) {
   try {
+    console.log("🔑 OPENROUTER_API_KEY loaded:", !!process.env.OPENROUTER_API_KEY);
+
     const body = await req.json();
 
     const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {

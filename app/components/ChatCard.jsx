@@ -1,11 +1,10 @@
+"use client";
 import React, { useState } from "react";
 
 const ChatCard = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const API_KEY = process.env.NEXT_PUBLIC_OPENROUTER_API_KEY;
 
   const handleSend = async () => {
     if (!input.trim()) return;
@@ -15,21 +14,13 @@ const ChatCard = () => {
     setInput("");
     setLoading(true);
 
-    console.log("🔑 Loaded key:", API_KEY ? "✅ Present" : "❌ Missing");
-    console.log("🛰️ Sending to DeepSeek...");
+    console.log("🛰️ Sending to /api/chat...");
 
     try {
       const res = await fetch("/api/chat", {
-
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${API_KEY}`,
-          "HTTP-Referer": "https://cyber-starlink.vercel.app", // change if your domain differs
-          "X-Title": "Cyber Starlink",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "deepseek/deepseek-chat",
           messages: [
             { role: "system", content: "You are Jarvis, the Cyber Starlink AI assistant." },
             ...messages.map((m) => ({ role: m.role, content: m.text })),
