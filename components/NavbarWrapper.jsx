@@ -1,12 +1,17 @@
 "use client";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 export default function NavbarWrapper() {
   const [glitchText, setGlitchText] = useState("CYBER STARLINK");
+  const [trailWidths, setTrailWidths] = useState([]);
 
-  // Random text glitching
+  // Run only on client to avoid SSR mismatch
   useEffect(() => {
+    const widths = Array.from({ length: 5 }, () => 15 + Math.random() * 10);
+    setTrailWidths(widths);
+
     const interval = setInterval(() => {
       if (Math.random() > 0.5) {
         const variants = [
@@ -25,7 +30,6 @@ export default function NavbarWrapper() {
 
   return (
     <>
-      {/* Import digital font inline */}
       <link
         href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap"
         rel="stylesheet"
@@ -53,7 +57,7 @@ export default function NavbarWrapper() {
           fontFamily: "'Orbitron', monospace",
         }}
       >
-        {/* Tron Glitch Text */}
+        {/* ========= Title ========= */}
         <motion.div
           style={{
             position: "relative",
@@ -69,15 +73,8 @@ export default function NavbarWrapper() {
           }}
         >
           <motion.span
-            animate={{
-              rotate: [0, 12, -12, 0],
-              scale: [1, 1.25, 1],
-            }}
-            transition={{
-              repeat: Infinity,
-              repeatDelay: 3,
-              duration: 1.2,
-            }}
+            animate={{ rotate: [0, 12, -12, 0], scale: [1, 1.25, 1] }}
+            transition={{ repeat: Infinity, repeatDelay: 3, duration: 1.2 }}
             style={{
               display: "inline-block",
               filter: "drop-shadow(0 0 8px #00ffff)",
@@ -98,22 +95,51 @@ export default function NavbarWrapper() {
           </motion.span>
         </motion.div>
 
-        {/* Moving Tron light trails */}
-        {[...Array(5)].map((_, i) => (
+        {/* ========= Centered HOME Button ========= */}
+        <div className="mt-2 z-10 relative">
+          <Link
+            href="/"
+            className="inline-block px-4 py-1.5 rounded-md text-cyan-200 border border-cyan-400/50 
+                       hover:bg-cyan-400 hover:text-black transition-all duration-300 
+                       text-sm font-semibold tracking-wider"
+            style={{
+              textShadow: "0 0 8px #00ffff, 0 0 16px #00aaff",
+              boxShadow: "0 0 10px rgba(0,255,255,0.4)",
+            }}
+          >
+            HOME
+          </Link>
+        </div>
+
+        {/* ========= Discussion Button (Top Right) ========= */}
+        <div
+          className="absolute right-6 top-1/2 -translate-y-1/2 z-10"
+        >
+          <Link
+            href="/network"
+            className="px-4 py-2 text-sm font-bold bg-cyan-500 text-black rounded-xl 
+                       shadow-lg hover:bg-cyan-400 transition-all duration-300"
+          >
+            Discussion
+          </Link>
+        </div>
+
+        {/* ========= Moving Tron Light Trails ========= */}
+        {trailWidths.map((width, i) => (
           <motion.div
             key={`trail-${i}`}
             initial={{ x: "-20%" }}
             animate={{ x: "120%" }}
             transition={{
-              duration: 4 + Math.random() * 3,
+              duration: 5 + i * 0.8,
               repeat: Infinity,
-              delay: i * 1.2,
               ease: "linear",
             }}
             className="absolute top-0 h-full"
             style={{
-              width: `${15 + Math.random() * 10}%`,
-              background: `linear-gradient(90deg, transparent, rgba(0,255,255,0.6), rgba(0,255,255,0))`,
+              width: `${width}%`,
+              background:
+                "linear-gradient(90deg, transparent, rgba(0,255,255,0.6), rgba(0,255,255,0))",
               filter: "blur(8px)",
               zIndex: 1,
               opacity: 0.4,
@@ -121,16 +147,15 @@ export default function NavbarWrapper() {
           />
         ))}
 
-        {/* Racing Lightcycles */}
+        {/* ========= Lightcycles ========= */}
         {[...Array(3)].map((_, i) => (
           <motion.div
             key={`cycle-${i}`}
             initial={{ x: "-15%" }}
             animate={{ x: "115%" }}
             transition={{
-              duration: 6 + Math.random() * 2,
+              duration: 6 + i * 2,
               repeat: Infinity,
-              delay: i * 1.8,
               ease: "easeInOut",
             }}
             className="absolute text-cyan-400 opacity-90 text-xl"
@@ -144,7 +169,7 @@ export default function NavbarWrapper() {
           </motion.div>
         ))}
 
-        {/* Scanline effect */}
+        {/* ========= Scanlines ========= */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
@@ -155,7 +180,7 @@ export default function NavbarWrapper() {
           }}
         />
 
-        {/* Neon glow overlay */}
+        {/* ========= Neon Glow Overlay ========= */}
         <div
           className="absolute inset-0"
           style={{
