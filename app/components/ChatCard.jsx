@@ -1,49 +1,37 @@
-"use client";
-import { useState, useRef, useEffect } from "react";
+import React, { useState } from "react";
 
-export default function ChatCard() {
-  const [messages, setMessages] = useState([
-    { role: "assistant", text: "👋 Cyber Starlink is online. How can I assist?" },
-  ]);
+const ChatCard = () => {
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const chatEndRef = useRef(null);
 
-  // Auto-scroll to bottom on update
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  // Local fallback
-  const fakeReply = (userMessage) => {
-    const replies = [
-      `Analyzing: "${userMessage}"... Result seems inconclusive.`,
-      `Cyber Starlink cannot connect to DeepSeek — switching to local inference.`,
-      `Offline mode engaged. Estimating: "${userMessage}" may relate to Earth data.`,
-      `Processing locally... ${userMessage}? Possibly a simple concept.`,
-    ];
-    return replies[Math.floor(Math.random() * replies.length)];
-  };
+  const API_KEY = process.env.NEXT_PUBLIC_OPENROUTER_API_KEY;
 
   const handleSend = async () => {
     if (!input.trim()) return;
-    const newMsg = { role: "user", text: input };
-    setMessages((prev) => [...prev, newMsg]);
+
+    const newMessage = { role: "user", text: input };
+    setMessages((prev) => [...prev, newMessage]);
     setInput("");
     setLoading(true);
 
+    console.log("🔑 Loaded key:", API_KEY ? "✅ Present" : "❌ Missing");
+    console.log("🛰️ Sending to DeepSeek...");
+
     try {
-      console.log("🛰️ Sending to DeepSeek...");
-      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      const res = await fetch("/api/chat", {
+
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer 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`, // 🔑 Replace with your key
+          Authorization: `Bearer ${API_KEY}`,
+          "HTTP-Referer": "https://cyber-starlink.vercel.app", // change if your domain differs
+          "X-Title": "Cyber Starlink",
         },
         body: JSON.stringify({
           model: "deepseek/deepseek-chat",
           messages: [
-            { role: "system", content: "You are Jarvis, an advanced AI assistant with precise, informative responses." },
+            { role: "system", content: "You are Jarvis, the Cyber Starlink AI assistant." },
             ...messages.map((m) => ({ role: m.role, content: m.text })),
             { role: "user", content: input },
           ],
@@ -51,84 +39,66 @@ export default function ChatCard() {
       });
 
       if (!res.ok) {
-        const errText = await res.text();
-        console.error("❌ DeepSeek error:", errText);
+        const errData = await res.text();
+        console.error("❌ DeepSeek error:", errData);
         throw new Error(`DeepSeek failed: ${res.status}`);
       }
 
       const data = await res.json();
-      const reply = data?.choices?.[0]?.message?.content?.trim();
+      const reply = data.choices?.[0]?.message?.content || "⚠️ No response received.";
 
-      if (reply) {
-        setMessages((prev) => [...prev, { role: "assistant", text: reply }]);
-      } else {
-        console.warn("⚠️ Empty response, switching to fallback.");
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", text: fakeReply(input) },
-        ]);
-      }
-    } catch (err) {
-      console.error("⚠️ DeepSeek unavailable:", err);
+      setMessages((prev) => [...prev, { role: "assistant", text: reply }]);
+    } catch (error) {
+      console.warn("⚠️ DeepSeek unavailable:", error.message);
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", text: fakeReply(input) },
+        {
+          role: "assistant",
+          text: `Offline mode engaged. Estimating: "${input}" may relate to Earth data.`,
+        },
       ]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
-
   return (
-    <div className="bg-black/60 border border-cyan-500/30 rounded-2xl p-4 backdrop-blur-md shadow-lg w-full max-w-md mx-auto">
-      <h2 className="text-cyan-400 text-sm mb-3 font-semibold tracking-wide text-center">
-        💬 Cyber Starlink Neural Chat
-      </h2>
-
-      <div className="h-80 overflow-y-auto space-y-3 mb-3 p-2 bg-black/30 rounded-xl border border-white/10">
-        {messages.map((msg, idx) => (
+    <div className="card bg-gray-900 text-white p-6 rounded-2xl shadow-lg max-w-lg mx-auto mt-10">
+      <h2 className="text-2xl font-bold mb-4">💬 Cyber Starlink Neural Chat</h2>
+      <div className="bg-gray-800 p-3 rounded-lg h-72 overflow-y-auto mb-4 space-y-2">
+        <div className="text-sm text-gray-400">👋 Cyber Starlink is online. How can I assist?</div>
+        {messages.map((m, i) => (
           <div
-            key={idx}
-            className={`p-2 rounded-lg text-sm ${
-              msg.role === "assistant"
-                ? "bg-cyan-900/40 text-cyan-300"
-                : "bg-white/10 text-white"
-            }`}
+            key={i}
+            className={`p-2 rounded-xl ${
+              m.role === "user" ? "bg-blue-600 ml-auto" : "bg-gray-700"
+            } max-w-[80%]`}
           >
-            {msg.text}
+            {m.text}
           </div>
         ))}
-        <div ref={chatEndRef} />
+        {loading && <div className="text-sm text-yellow-400">Processing...</div>}
       </div>
 
-      <div className="flex items-center space-x-2">
-        <textarea
-          rows={1}
+      <div className="flex space-x-2">
+        <input
+          type="text"
+          className="flex-grow bg-gray-800 text-white p-2 rounded-lg focus:outline-none"
+          placeholder="Type a message..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Type your message..."
-          className="flex-1 resize-none bg-black/40 text-white text-sm rounded-xl px-3 py-2 border border-white/20 focus:outline-none focus:border-cyan-400"
+          onKeyDown={(e) => e.key === "Enter" && handleSend()}
         />
         <button
           onClick={handleSend}
           disabled={loading}
-          className={`px-3 py-2 rounded-xl text-sm font-semibold transition ${
-            loading
-              ? "bg-cyan-900/40 text-cyan-300"
-              : "bg-cyan-500 hover:bg-cyan-600 text-black"
-          }`}
+          className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-semibold disabled:opacity-50"
         >
-          {loading ? "..." : "Send"}
+          Send
         </button>
       </div>
     </div>
   );
-}
+};
+
+export default ChatCard;
